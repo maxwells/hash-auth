@@ -17,17 +17,43 @@ module HashAuth
 
       protected 
       def verify_hash
-        string_to_hash = HashAuth.configuration.acquire_string_to_hash.call self
-        client = HashAuth::ClientIp.find_by_address(request.remote_ip).client
-        target_string = HashAuth.confiuration.hash_string string_to_hash, client
-        authenticated = (target_string == params[client.ext_id_field.to_sym])
-        puts "#{string_to_hash} was #{authenticated ? 'successfully' : 'not'} authenticated for the given client"
+        ###
+        ###
+        ### I am seeing a need to provide specific failure methods (no client, client domain failed, authentication failed)
+        ###
+        ###
+
+        client = extract_client_from_request
+        return client.strategy.on_failure(nil, self) unless client
+
+        valid_domain = check_host(client, request.host)
+        return client.strategy.on_failure(client, self) unless valid_domain
+
+        string_to_hash = client.strategy.acquire_string_to_hash self, client
+        target_string = client.strategy.hash_string string_to_hash
+        authenticated = client.strategy.verify_hash(target_string, client, self) && valid_domain
+        return client.strategy.on_failure(client, self) unless authenticated
       end
 
       def extract_client_from_request
-        # EITHER create a join table and rules for what ip addresses and what not are valid and match up with the request initiating ip
-        # OR get list of ext_id_fields for clients, match them with params, and match where ext_id = params[:ext_id_field] for a given client
+        HashAuth.clients.each do |c|
+          return c if params[c.customer_identifier_param] == c.customer_identifier
+        end
+        raise "No client matches the request"
       end
+
+      def check_host(client, host)
+        client.valid_domains.each do |d|
+          match = regexp_from_host(d).match(host)
+          return true if match != nil
+        end
+        false
+      end
+
+      def regexp_from_host(host)
+        Regexp.new '^'+host.gsub('.','\.').gsub('*', '.*') + '$'
+      end
+
     end
   end
 end

@@ -1,7 +1,7 @@
 module HashAuth
   class MissingConfiguration < StandardError
     def initialize
-      super("Configuration for doorkeeper missing. Do you have a hash-auth initializer?")
+      super("Configuration for hash-auth missing. Do you have a hash-auth initializer?")
     end
   end
 
@@ -11,6 +11,32 @@ module HashAuth
 
   def self.configuration
     @config || (raise MissingConfiguration.new)
+  end
+
+  def self.configuration=(val)
+    @config = val
+  end
+
+  def self.clients=(val)
+    @clients = val
+  end
+
+  def self.clients
+    @clients
+  end
+
+  def self.strategies
+    return @strategies if @strategies
+    
+    constants = HashAuth::Strategies.constants.select { |c| Class === HashAuth::Strategies.const_get(c) }
+    @strategies = constants.select{|c| c != :Base}.map{ |c| HashAuth::Strategies.const_get(c) }
+    @strategies
+  end
+
+  def self.find_strategy(name)
+    strategy = self.strategies.select{|s| s.identifier == name}[0]
+    raise "Strategy specified with name = #{name} does not exist" unless strategy
+    strategy
   end
 
   class Config
@@ -24,30 +50,52 @@ module HashAuth
         @config
       end
 
-      def acquire_string_to_hash(&block)
-        puts "acquire_string_to_hash set!"
-        @config.instance_variable_set("@acquire_string_to_hash", block)
-      end
-
-      def hash_string(&block)
-        @config.instance_variable_set("@hash_string", block)
-      end
-
-      def set_default_external_id_field(val)
-        @config.instance_variable_set("@default_external_id_field", val)
+      def set_default_customer_identifier_param(val)
+        @config.instance_variable_set("@default_customer_identifier_param", val)
       end
 
       def set_default_signature_param(val)
         @config.instance_variable_set("@default_signature_param", val)
       end
 
-      def set_client_class(val)
-        HashAuth::Client = val
+      def set_default_strategy(val)
+        strategy = HashAuth.find_strategy val
+        @config.instance_variable_set("@default_strategy", strategy)
+      end
+
+      def add_client(client)
+        (HashAuth.clients ||= []) << create_client_from_hash_if_valid(client)
+      end
+
+      # add_clients calls add_client on a list of client hashes
+      #
+      # @param [Hash] clients - an Array of client hashes
+      def add_clients(clients)
+        clients.each do |client| 
+          add_client client
+        end
+      end
+
+      def create_client_from_hash_if_valid(client)
+        [:customer_key, :customer_identifier, :valid_domains].each do |required_val|
+          raise "Client hash is missing #{required_val}" unless client[required_val]
+        end
+        client[:strategy] = HashAuth.find_strategy(client[:strategy]) if client[:strategy]
+        client[:valid_domains] = [client[:valid_domains]] unless client[:valid_domains].kind_of? Array
+        HashAuth::Client.new client
       end
     end
 
-    def acquire_string_to_hash
-      @acquire_string_to_hash
+    def default_customer_identifier_param
+      @default_customer_identifier_param || "customer_id"
+    end
+
+    def default_signature_param
+      @default_signature_param || "signature"
+    end
+
+    def default_strategy
+      @default_strategy || HashAuth::Strategies::Default
     end
 
   end

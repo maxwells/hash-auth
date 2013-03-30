@@ -12,37 +12,118 @@ Solely using a shared key leaves one hole open: the ability for a third party to
 
 ## Usage
 
-##### Installation
+### Installation
 
 1) Install the HashAuth gem from RubyGems
 
-	> gem install hash-auth
+	$ gem install hash-auth
 
 2) Add it to your Rails application's Gemfile
 
-	> gem "hash-auth"
+	gem "hash-auth"
 	
 3) Install it into your Rails application
 
-	> rails g hashauth:install	
+	$ rails g hashauth:install	
 
-##### Configuration
+### Configuration
 
-The install generator will place an initializer (hashauth.rb) into your config/initializers directory. Incoming and Outgoing configuration blocks should match up in terms of creating and verifying the same hashed value. The following blocks are configurable:
+The install generator will place an initializer (hashauth.rb) into your config/initializers directory. The following will walk you through the default configuration options and what they mean
 
-	1) Acquiring the string to hash from a request that your application has received
-	2) How to hash the string acquired from block 1
 
-Additionally, if your application will be receiving signed requests
+**_Adding an authentication strategy._**
 
-	3) What to do when authentication fails -- This defaults to returning a 401 (Forbidden)
+Generate a new strategy, which will live in lib/hash_auth/strategies
 
-In the case that your application accepts and makes signed requests from/to multiple clients or providers, you must configure the key:value list of clients and secret keys. By default, YAML is used.
+	rails g hash_auth:strategy name_of_strategy
 
-	Clients:
-		
+This will generate a template that needs to be filled in with the necessary behavior for authenticating your client. Here is an example strategy
+
+
+```ruby	
+
+	module HashAuth
+      module Strategies
+        class NameOfStrategy < Base
+
+          def name
+            :name_of_strategy
+          end
+
+		  ## The string that your client hashes for its signature is a concatenation of parameters in order, joined by '&' and appended with the client's secret key.
+          def acquire_string_to_hash(controller, client)
+            controller.params.select{|k,v| k != 'controller' && k != 'action' }.map{|k,v| "#{k}=#{v}"}.join('&') + client.customer_key
+          end
+
+		  # Client hashes string with SHA256
+          def hash_string(string, client)
+            Digest::sha2.new(256) << string
+          end
+
+          def on_authentication(client)
+            # Do nothing. If you were so inclined, you could use the client information to do something specific to your system (like logging in a proxy user for your API client with your favorite user management system)
+          end
+
+        end
+      end
+    end
+
+```
+
+**_Adding Clients via hardcoding (Config)._**
+
+
+```ruby
+
+	#### Adding a new client
 	
-##### Implementation
+	# Add a client to a strategy. Any key:value sets can be added to the hash, which will be accessible in your strategy. The required ones are shown below (though there are default options for customer_identifier_param and strategy)
+	add_client {
+		:customer_key => '1234567890',
+			# the shared secret between you and a client
+		:customer_identifier => 'my_organization',
+			# the unique identifer the client will pass you to identify themselves
+		:customer_identifier_param => 'customer_id',
+			# the name of the parameter the client will pass their unique identifier in
+		:valid_domains => '*my_organization.org',
+			# will allow request from anything ending with my_organization.org, can also provide a list
+		:strategy => :my_auth_strategy,
+			# If no strategy is provided, then the default (HashAuth::Strategies::Default) will be used. If the strategy symbol does not reference a valid strategy, then an exception will be raised
+	}
+```
+**_Adding Clients from an external resource (eg YAML, Database)._**
+		
+YAML file (config/clients.yml in this example):
+
+	clients:
+      -
+        customer_key: 1234567890
+        customer_identifier: my_organization
+        customer_identifier_param: customer_id
+        valid_domains: '*my_organization.org'
+        strategy: :my_auth_strategy
+        proxy_email: user@my_organization.org
+        custom_key: custom_value
+      -
+        customer_key: 0987654321
+        customer_identifier: your_organization
+        customer_identifier_param: customer_id
+        valid_domains: ['your_organization.com', 'your_organization.org']
+        strategy: :my_auth_strategy
+        proxy_email: admin@your_organization.org
+        custom_key: custom_value
+	
+hash-auth initializer:
+
+```ruby
+
+	add_clients do
+		YAML::load( File.open('../clients.yml') )
+	end
+	
+```
+	
+#### Implementation
 
 ## Examples
 

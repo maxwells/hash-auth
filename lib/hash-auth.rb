@@ -8,6 +8,9 @@ module HashAuth
     #puts "HashAuth included"
   end
   autoload :Controllers, 'hash-auth/controllers'
+  autoload :Strategies, 'hash-auth/strategies'
+  autoload :Client, 'hash-auth/client'
+  autoload :WebRequest, 'hash-auth/web_request'
 
   module ClassMethods
     def validates_auth_for(*methods, &block)
