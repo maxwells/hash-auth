@@ -1,6 +1,7 @@
 HashAuth.configure do
   
-  clients = YAML::load( File.open('config/clients.yml') )
+  cur_dir = File.expand_path(File.dirname(__FILE__))
+  clients = YAML::load( File.open(File.join(cur_dir, '../clients.yml') ) )
   add_clients clients["clients"]
 
 end
