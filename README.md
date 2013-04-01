@@ -5,7 +5,7 @@ HashAuth allows your Rails application to support incoming and outgoing two-fact
 Solely using a shared key leaves one hole open: the ability for a third party to send a duplicate request if they are playing man in the middle, so it is important to combine the secret key with some unique data (eg. request IP and datetime) to reduce the scope of when and from where a given request is valid. Again, this only applies to duplicate requests.
 
 ## Features
-- HashAuth can be configured to support multiple clients, each with their own authentication blocks (ie. customer 1 could use MD5 hash, customer 2 could use SHA256).
+- HashAuth can be configured to support multiple clients, each with their own authentication blocks (ie. customer 1 could use MD5 hash, customer 2 could use hmac-SHA256).
 - Clients can be authenticated as a proxy user upon successful hash authentication (ie. if your controller action depends on having current_user, you can assign an email address to your client and have it log in that user)
 - Custom blocks can be provided to (a) acquire the string to hash, (b) hash the string, or (c) perform a custom action upon authentication from a request from each indivudual client
 - Enhanced security can be enabled by requiring each client to submit a GMT version of their system time to be included in the hash, which will mean any given request is only valid within a predefined window (reduces the possibility of a man in the middle attack through duplicate requests)
@@ -25,6 +25,10 @@ Solely using a shared key leaves one hole open: the ability for a third party to
 3) Install it into your Rails application
 
 	$ rails g hashauth:install	
+	
+4) If you need to create your own strategies
+
+	$ rails g hashauth:strategy [name]
 
 ### Configuration
 
@@ -101,8 +105,7 @@ YAML file (config/clients.yml in this example):
         customer_identifier: my_organization
         customer_identifier_param: customer_id
         valid_domains: '*my_organization.org'
-        strategy: :my_auth_strategy
-        proxy_email: user@my_organization.org
+        strategy: :default
         custom_key: custom_value
       -
         customer_key: 0987654321
@@ -110,23 +113,84 @@ YAML file (config/clients.yml in this example):
         customer_identifier_param: customer_id
         valid_domains: ['your_organization.com', 'your_organization.org']
         strategy: :my_auth_strategy
-        proxy_email: admin@your_organization.org
         custom_key: custom_value
 	
 hash-auth initializer:
 
 ```ruby
 
-	add_clients do
-		YAML::load( File.open('../clients.yml') )
-	end
+	clients = YAML::load( File.open('config/clients.yml') )
+    add_clients clients["clients"]
 	
 ```
+
+**_Options in hash-auth initializer_**
+
+Any custom client field can be initialized with a default value through method missing 
+
+	HashAuth.configure do
+		set_default_authentication_success_status_message {:status => "success" }
+	end
 	
-#### Implementation
+will allow that value to be used in blocks later without initializing them in every client object. Ie. you could have 5 clients, three of which have a custom failure_json value in their definition and two of which will then use the default.
+
+	## In a custom strategy…
+	
+	def self.on_failure(client, controller)
+		@failed_authentication_status = {:status => 'failure'}
+	end
+	
+	## In the controller…
+	def my_action
+		if (@authenticated)
+			... Do necessary stuff
+			response = @client.authentication_success_status_message
+		else
+			response = @failed_authentication_json
+		end
+	
+		respond_to do |format|
+			format.json { render :json => response }
+		end
+	end
+
+Additionally, the default strategy for every client can be set (if not set, will revert to HashAuth::Strategies::Default)
+
+	set_default_strategy :strategy_identifier
+
+	
+#### Implementation: _Receiving hashed requests_
+
+In whatever controller(s) require hash authentication of requests
+
+	validates_auth_for :action_one, :action_two
+
+The following variables are available in implementing controller actions
+
+	@client : HashAuth::Client - instance of client (if found, whether or not authenticated)
+	@authenticated : Boolean - whether or not the hashed request was considered validated
+
+
+#### Implementation: _Making hashed requests_	
+In whatever controllers, models, or otherwise that require creating hash authenticated requests, use the HashAuth::WebRequest around [REST client](https://github.com/rest-client/rest-client).
+
+	client = HashAuth.find_client 'my_organization'
+	HashAuth::WebRequest.post client, 'localhost:3000/test/one', {:foo => :bar, :bar => :baz}
+
+WebRequest supports:
+
+	def self.get(client, url, parameters = {}, &block)
+    def self.post(client, url, payload, headers = {}, &block)
+    def self.patch(client, url, payload, headers = {}, &block)
+    def self.put(client, url, payload, headers = {}, &block)
+    def self.delete(client, url, parameters = {}, &block)
+    def self.head(client, url, parameters = {}, &block)
+    def self.options(client, url, parameters = {}, &block)
+
+See [REST client](https://github.com/rest-client/rest-client) for futher detail.
+
 
 ## Examples
-
 
 
 This project rocks and uses MIT-LICENSE.

@@ -14,11 +14,7 @@ module HashAuth
 
   module ClassMethods
     def validates_auth_for(*methods, &block)
-      puts "signs_requests called"
-      puts methods
       self.send :include, Controllers::Helpers
-      @secret = "ABCDEFGHIJKLMNOPQRSTUVWXYZ"
-
       initialize_for_hash_auth methods
     end
   end
