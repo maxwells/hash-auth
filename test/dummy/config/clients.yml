@@ -1,0 +1,24 @@
+clients:
+  -
+    :customer_key: 1234567890
+    :customer_identifier: my_organization
+    :customer_identifier_param: customer_id
+    :valid_domains: ['*proctorcam.com', 'localhost']
+    :signature_param: signature
+    :strategy: :default
+    :proxy_email: user@my_organization.org
+  -
+    :customer_key: 0987654321
+    :customer_identifier: your_organization
+    :customer_identifier_param: customer_id
+    :valid_domains: ['your_organization.com', 'your_organization.org']
+    :signature_param: signature
+    :authentication_type: :default
+    :proxy_email: admin@your_organization.org
+  -
+    :customer_key: 'something other than on testing side'
+    :customer_identifier: incorrect_hash
+    :customer_identifier_param: customer_id
+    :signature_param: signature!
+    :valid_domains: '*'
+    :strategy: :default
