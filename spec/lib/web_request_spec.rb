@@ -1,4 +1,4 @@
-require_relative '../spec_helper'
+require File.expand_path('../../spec_helper', __FILE__)
 
 # HashAuth::WebRequest specs rely on having the dummy app running on localhost:3000.
 # This will remain true until a test server is put up. These specs are commented out in

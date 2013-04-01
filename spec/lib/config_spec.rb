@@ -1,4 +1,4 @@
-require_relative '../spec_helper'
+require File.expand_path('../../spec_helper', __FILE__)
 
 prev_config = HashAuth.configuration
 

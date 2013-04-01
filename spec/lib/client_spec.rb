@@ -1,4 +1,4 @@
-require_relative '../spec_helper'
+require File.expand_path('../../spec_helper', __FILE__)
 require 'active_support/all'
 require 'hash-auth'
 
