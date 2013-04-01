@@ -1,4 +1,7 @@
 # HashAuth
+[![Code Climate](https://codeclimate.com/github/maxwells/hash-auth.png)](https://codeclimate.com/github/maxwells/hash-auth)
+[![Dependency Status](https://gemnasium.com/maxwells/hash-auth.png)](https://gemnasium.com/maxwells/hash-auth)
+[![Build Status](https://travis-ci.org/maxwells/hash-auth.png?branch=master)](https://travis-ci.org/maxwells/hash-auth)
 
 HashAuth allows your Rails application to support incoming and outgoing two-factor authentication via hashing some component of an HTTPS request. Both sides of the request (your Rails app and your client or provider) must have some unique shared secret. This secret is used to create a hash of some portion of the request, ensuring that (if neither side has been compromised) only the other party could have created the request.
 
