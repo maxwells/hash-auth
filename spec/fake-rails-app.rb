@@ -156,10 +156,11 @@ class Request
   # so as to allow different Client objects to have different properties
   # that are accessible by . notation
   def add_instance_getters_and_setters(var)
-    define_singleton_method var.to_sym do
+    singleton = (class << self; self end)
+    singleton.send :define_method, var.to_sym do
       instance_variable_get "@#{var}"
     end
-    define_singleton_method "#{var}=".to_sym do |val|
+    singleton.send :define_method, "#{var}=".to_sym do |val|
       instance_variable_set "@#{var}", val
     end
   end
