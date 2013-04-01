@@ -82,7 +82,7 @@ module HashAuth
       end
 
       def method_missing(method, *args, &block)
-        match = /set_(default_.*)/.match method
+        match = /set_(default_.*)/.match method.to_s
         if match
           default_var_name = match[1]
           @config.instance_variable_set("@#{default_var_name}", args[0])
