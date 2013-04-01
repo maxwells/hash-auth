@@ -33,7 +33,7 @@ module HashAuth
     return @strategies if @strategies
     
     constants = HashAuth::Strategies.constants.select { |c| Class === HashAuth::Strategies.const_get(c) }
-    @strategies = constants.select{|c| c != :Base}.map{ |c| HashAuth::Strategies.const_get(c) }
+    @strategies = constants.map{ |c| HashAuth::Strategies.const_get(c) }.select{|c| c != HashAuth::Strategies::Base}
     @strategies
   end
 
