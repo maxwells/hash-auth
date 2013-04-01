@@ -87,7 +87,8 @@ module HashAuth
           default_var_name = match[1]
           @config.instance_variable_set("@#{default_var_name}", args[0])
           if @config.respond_to?("#{default_var_name}".to_sym) == false
-            @config.define_singleton_method "#{default_var_name}".to_sym do instance_variable_get("@#{default_var_name}") end
+            singleton = (class << @config; self end)
+            singleton.send :define_method, "#{default_var_name}".to_sym do instance_variable_get("@#{default_var_name}") end
           end
         end
       end
