@@ -22,12 +22,12 @@ module HashAuth
       end
     end
 
-    def customer_identifier_param
-      HashAuth.configuration.default_customer_identifier_param
-    end
-
-    def strategy
-      HashAuth.configuration.default_strategy
+    def method_missing(method, *args, &block)
+      # Check config for default value
+      default = "default_#{method}"
+      if HashAuth.configuration.respond_to? default
+        HashAuth.configuration.send default
+      end
     end
   end
 end

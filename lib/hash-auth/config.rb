@@ -25,6 +25,10 @@ module HashAuth
     @clients
   end
 
+  def self.find_client(name)
+    @clients.select{|c| c.customer_identifier == name}[0]
+  end
+
   def self.strategies
     return @strategies if @strategies
     
@@ -48,14 +52,6 @@ module HashAuth
 
       def build
         @config
-      end
-
-      def set_default_customer_identifier_param(val)
-        @config.instance_variable_set("@default_customer_identifier_param", val)
-      end
-
-      def set_default_signature_param(val)
-        @config.instance_variable_set("@default_signature_param", val)
       end
 
       def set_default_strategy(val)
@@ -83,6 +79,17 @@ module HashAuth
         client[:strategy] = HashAuth.find_strategy(client[:strategy]) if client[:strategy]
         client[:valid_domains] = [client[:valid_domains]] unless client[:valid_domains].kind_of? Array
         HashAuth::Client.new client
+      end
+
+      def method_missing(method, *args, &block)
+        match = /set_(default_.*)/.match method
+        if match
+          default_var_name = match[1]
+          @config.instance_variable_set("@#{default_var_name}", args[0])
+          if @config.respond_to?("#{default_var_name}".to_sym) == false
+            @config.define_singleton_method "#{default_var_name}".to_sym do instance_variable_get("@#{default_var_name}") end
+          end
+        end
       end
     end
 
