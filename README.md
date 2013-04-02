@@ -7,6 +7,8 @@ HashAuth allows your Rails application to support incoming and outgoing two-fact
 
 Solely using a shared key leaves one hole open: the ability for a third party to send a duplicate request if they are playing man in the middle, so it is important to combine the secret key with some unique data (eg. request IP and datetime) to reduce the scope of when and from where a given request is valid. Again, this only applies to duplicate requests.
 
+_Note: Only Ruby 1.9.2 and above are supported, due to lack of ordered Hash objects in previous versions._
+
 ## Features
 - HashAuth can be configured to support multiple clients, each with their own authentication blocks (ie. customer 1 could use MD5 hash, customer 2 could use hmac-SHA256).
 - Clients can be authenticated as a proxy user upon successful hash authentication (ie. if your controller action depends on having current_user, you can assign an email address to your client and have it log in that user)
