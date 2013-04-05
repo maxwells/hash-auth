@@ -1,3 +1,5 @@
+Dir["lib/hash-auth/*.rb"].each {|file| require "hash-auth/#{File.basename file, '.rb'}" }
+
 HashAuth.configure do
   
   cur_dir = File.expand_path(File.dirname(__FILE__))

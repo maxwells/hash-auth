@@ -1,3 +1,5 @@
+Dir["lib/hash-auth/*.rb"].each {|file| require "hash-auth/#{File.basename file, '.rb'}" }
+
 HashAuth.configure do
 
   ## Block to allow dynamic loading of customer keys (Optional)
