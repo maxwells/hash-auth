@@ -39,7 +39,7 @@ module HashAuth
 
   def self.find_strategy(name)
     strategy = self.strategies.select{|s| s.identifier == name}[0]
-    raise "Strategy specified with name = #{name} does not exist" unless strategy
+    raise "Strategy specified with name = :#{name} does not exist" unless strategy
     strategy
   end
 
