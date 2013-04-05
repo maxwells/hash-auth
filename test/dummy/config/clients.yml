@@ -22,3 +22,10 @@ clients:
     :signature_param: signature!
     :valid_domains: '*'
     :strategy: :default
+  -
+    :customer_key: customerkey
+    :customer_identifier: customer
+    :customer_identifier_param: customer_id
+    :signature_param: signature
+    :strategy: :reverse_guid
+    :valid_domains: '*'
