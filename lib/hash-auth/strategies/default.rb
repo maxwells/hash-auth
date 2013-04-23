@@ -12,7 +12,8 @@ module HashAuth
       end
 
       def self.hash_string(client, string)
-        Digest::SHA2.new(256) << string
+        digest = Digest::SHA256.new
+        digest.hexdigest string
       end
 
       def self.verify_hash(target_string, client, controller)
