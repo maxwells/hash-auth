@@ -1,3 +1,5 @@
+require 'resolv'
+
 module HashAuth
   module Controllers
     module Helpers
@@ -18,18 +20,20 @@ module HashAuth
         @client = extract_client_from_request
         return HashAuth.configuration.default_strategy.on_failure(nil, self, :no_matching_client) unless @client
 
-        valid_domain = check_host(request.host)
-        return @client.strategy.on_failure(@client, self, :invalid_domain) unless valid_domain
+        case HashAuth.configuration.domain_auth
+        when :ip
+          return @client.strategy.on_failure(@client, self, :invalid_ip) unless check_ip(request.remote_ip)
+        when :reverse_dns
+          domain = extract_domain(request.remote_ip)
+          return @client.strategy.on_failure(@client, self, :invalid_domain) unless check_host(domain)
+        end
 
         string_to_hash = @client.strategy.acquire_string_to_hash self, @client
         target_string = @client.strategy.hash_string @client, string_to_hash
-        @authenticated = @client.strategy.verify_hash(target_string, @client, self) && valid_domain
-        
-        if @authenticated
-          @client.strategy.on_authentication @client, self
-        else
-          @client.strategy.on_failure(@client, self, :invalid_hash)
-        end
+        @authenticated = @client.strategy.verify_hash(target_string, @client, self)
+
+        return @client.strategy.on_authentication @client, self if @authenticated
+        @client.strategy.on_failure(@client, self, :invalid_hash)
       end
 
       def extract_client_from_request
@@ -37,6 +41,20 @@ module HashAuth
           return c if params[c.customer_identifier_param] == c.customer_identifier
         end
         nil
+      end
+
+      def extract_domain(ip)
+        cache_address = "#{HashAuth.configuration.cache_store_namespace}-#{ip}"
+        cached_result = Rails.cache.read cache_address
+        return cached_result unless cached_result == nil
+        hostname = Resolv.new.getname(ip)
+        Rails.cache.write cache_address, hostname
+        hostname
+      end
+
+      def check_ip(ip)
+        @client.valid_ips.each { |valid_ip| return true if ip == valid_ip }
+        false
       end
 
       def check_host(host)

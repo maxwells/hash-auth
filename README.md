@@ -14,6 +14,7 @@ _Note: Only Ruby 1.9.2 and above are supported, due to lack of ordered Hash obje
 - Clients can be authenticated as a proxy user upon successful hash authentication (ie. if your controller action depends on having current_user, you can assign an email address to your client and have it log in that user)
 - Custom blocks can be provided to (a) acquire the string to hash, (b) hash the string, or (c) perform a custom action upon authentication from a request from each indivudual client
 - Enhanced security can be enabled by requiring each client to submit a GMT version of their system time to be included in the hash, which will mean any given request is only valid within a predefined window (reduces the possibility of a man in the middle attack through duplicate requests)
+- Requests can be filtered by remote ip address specifically or by the reverse dns lookup of the remote ip address
 
 ## Usage
 
@@ -95,7 +96,9 @@ This will generate a template that needs to be filled in with the necessary beha
 		:customer_identifier_param => 'customer_id',
 			# the name of the parameter the client will pass their unique identifier in
 		:valid_domains => '*my_organization.org',
-			# will allow request from anything ending with my_organization.org, can also provide a list
+			# will allow request from anything ending with my_organization.org, can also provide a list. Note: this only works if reverse_dns ip filtering, so the reverse dns lookup for a clients IP must match up. (domain_auth :reverse_dns)
+		:valid_ips => '192.168.1.1',
+			# will allow request from a specific ip or list of ips. Note: only works if ip filtering is enabled (domain_auth :ip)
 		:strategy => :my_auth_strategy,
 			# If no strategy is provided, then the default (HashAuth::Strategies::Default) will be used. If the strategy symbol does not reference a valid strategy, then an exception will be raised
 	}
@@ -110,6 +113,7 @@ YAML file (config/clients.yml in this example):
         customer_identifier: my_organization
         customer_identifier_param: customer_id
         valid_domains: '*my_organization.org'
+        valid_ips: '192.168.1.1'
         strategy: :default
         custom_key: custom_value
       -
@@ -117,6 +121,7 @@ YAML file (config/clients.yml in this example):
         customer_identifier: your_organization
         customer_identifier_param: customer_id
         valid_domains: ['your_organization.com', 'your_organization.org']
+        valid_ips: ['192.168.1.1', '192.168.1.2']
         strategy: :my_auth_strategy
         custom_key: custom_value
 	
@@ -131,7 +136,34 @@ hash-auth initializer:
 
 **_Options in hash-auth initializer_**
 
-Any custom client field can be initialized with a default value through method missing 
+Enable ip or reverse dns filtering
+
+```ruby
+	HashAuth.configure do
+		domain_auth :ip
+	end
+	
+	# or
+	
+	HashAuth.configure do
+		domain_auth :reverse_dns
+	end
+```
+
+Reverse DNS filtering caches the result. You have the option to namespace how that data gets stored. Note: client.
+
+```ruby
+	HashAuth.configure do
+		cache_store_namespace "foo"
+	end
+	
+	# will store the reverse dns lookup associated with an ip address
+	# as "foo-#{ip}" in the Rails.cache
+	# Example: 192.168.1.1 whould become foo-192.168.1.1
+	# Defaults to "hash-auth"
+```
+
+Any custom client field can be initialized with a default value through method missing (set_default_*)
 
 	HashAuth.configure do
 		set_default_authentication_success_status_message {:status => "success" }
@@ -194,8 +226,6 @@ WebRequest supports:
 
 See [REST client](https://github.com/rest-client/rest-client) for futher detail.
 
-
-## Examples
-
+## License
 
 This project rocks and uses MIT-LICENSE.

@@ -7,7 +7,7 @@ module HashAuth
       end
 
       def self.acquire_string_to_hash(controller, client)
-        params = controller.params.select{|k,v| k != 'controller' && k != 'action' && k != client.signature_param }.map{|k,v| "#{k}=#{v}"}.join('&')
+        params = controller.params.select{|k,v| !['controller', 'action', 'format', client.signature_param].include? k }.map{|k,v| "#{k}=#{v}"}.join('&')
         params + client.customer_key.to_s
       end
 
@@ -26,9 +26,16 @@ module HashAuth
       end
 
       def self.on_failure(client, controller, type)
-        controller.instance_variable_set '@failure_message', 'Not a valid client' if type == :no_matching_client
-        controller.instance_variable_set '@failure_message', 'Request coming from invalid domain' if type == :invalid_domain
-        controller.instance_variable_set '@failure_message', 'Signature hash is invalid' if type == :invalid_hash
+        case type
+        when :no_matching_client
+          controller.instance_variable_set '@failure_message', 'Not a valid client'
+        when :invalid_domain
+          controller.instance_variable_set '@failure_message', 'Request coming from invalid domain'
+        when :invalid_hash
+          controller.instance_variable_set '@failure_message', 'Signature hash is invalid'
+        when :invalid_ip
+          controller.instance_variable_set '@failure_message', 'Request coming from invalid IP' 
+        end
       end
 
       def self.sign_request(client, verb, params)

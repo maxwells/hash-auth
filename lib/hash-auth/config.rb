@@ -78,6 +78,7 @@ module HashAuth
         end
         client[:strategy] = HashAuth.find_strategy(client[:strategy]) if client[:strategy]
         client[:valid_domains] = [client[:valid_domains]] unless client[:valid_domains].kind_of? Array
+        client[:valid_ips] = [client[:valid_ips]] unless client[:valid_ips].kind_of? Array
         HashAuth::Client.new client
       end
 
@@ -89,6 +90,13 @@ module HashAuth
           if @config.respond_to?("#{default_var_name}".to_sym) == false
             singleton = (class << @config; self end)
             singleton.send :define_method, "#{default_var_name}".to_sym do instance_variable_get("@#{default_var_name}") end
+          end
+        else
+          var_name = method
+          @config.instance_variable_set("@#{var_name}", args[0])
+          if @config.respond_to?("#{var_name}".to_sym) == false
+            singleton = (class << @config; self end)
+            singleton.send :define_method, "#{var_name}".to_sym do instance_variable_get("@#{var_name}") end
           end
         end
       end
@@ -104,6 +112,14 @@ module HashAuth
 
     def default_strategy
       @default_strategy || HashAuth::Strategies::Default
+    end
+
+    def cache_store_namespace
+      @cache_store_namespace.to_s || "hash-auth"
+    end
+
+    def domain_auth
+      @domain_auth || :none
     end
 
   end

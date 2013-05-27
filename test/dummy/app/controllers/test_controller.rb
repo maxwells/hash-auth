@@ -3,7 +3,6 @@ class TestController < ApplicationController
 
   def one
     message = {:message => @failure_message || 'ok'}
-    puts message.inspect
     respond_to do |format|
       format.html { render :json => message }
       format.json { render :json => message }
@@ -19,5 +18,17 @@ class TestController < ApplicationController
 
   def three
     puts "test#three"
+  end
+
+  def extract_client_from_request_helper
+    extract_client_from_request
+  end
+
+  def check_host_helper(host)
+    check_host(host)
+  end
+
+  def verify_hash_helper
+    verify_hash
   end
 end
