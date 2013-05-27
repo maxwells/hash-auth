@@ -1,4 +1,4 @@
-require 'rails/all'
+require 'rails'
 require 'active_support/all'
 require 'action_controller/railtie'
 require 'hash-auth'
