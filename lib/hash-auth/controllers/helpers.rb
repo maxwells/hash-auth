@@ -53,11 +53,13 @@ module HashAuth
       end
 
       def check_ip(ip)
+        return true if @client.valid_ips.length == 0
         @client.valid_ips.each { |valid_ip| return true if ip == valid_ip }
         false
       end
 
       def check_host(host)
+        return true if @client.valid_domains.length == 0
         @client.valid_domains.each do |d|
           match = regexp_from_host(d).match(host)
           return true if match != nil

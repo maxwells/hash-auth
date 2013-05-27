@@ -136,6 +136,7 @@ hash-auth initializer:
 
 **_Options in hash-auth initializer_**
 
+* IP Filtering *
 Enable ip or reverse dns filtering
 
 ```ruby
@@ -150,7 +151,9 @@ Enable ip or reverse dns filtering
 	end
 ```
 
-Reverse DNS filtering caches the result. You have the option to namespace how that data gets stored. Note: client.
+Note: if a client has no valid_ips or valid_domains associated with it, then no filtering will occur.
+
+Reverse DNS filtering caches the result. You have the option to namespace how that data gets stored. 
 
 ```ruby
 	HashAuth.configure do
@@ -162,6 +165,8 @@ Reverse DNS filtering caches the result. You have the option to namespace how th
 	# Example: 192.168.1.1 whould become foo-192.168.1.1
 	# Defaults to "hash-auth"
 ```
+
+* Custom & Default Values*
 
 Any custom client field can be initialized with a default value through method missing (set_default_*)
 
