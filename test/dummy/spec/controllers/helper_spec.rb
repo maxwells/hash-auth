@@ -65,6 +65,13 @@ describe TestController do
         response_hash['message'].should == "ok"
       end
 
+      it "validates request based on remote_ip with wildcard valid_ip" do
+        ActionDispatch::Request.any_instance.stub(:remote_ip).and_return("255.255.255.255")
+        get :one, {:a => "b", :customer_id => "my_organization", :signature => '8b1207c76c1c2b982885a1338feaf3c8a115afa280836703490e42e6b1944516'}
+        response_hash = JSON.parse response.body
+        response_hash['message'].should == "ok"
+      end 
+
     end
 
     describe "with reverse DNS authentication" do

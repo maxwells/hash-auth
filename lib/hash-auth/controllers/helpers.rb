@@ -54,20 +54,23 @@ module HashAuth
 
       def check_ip(ip)
         return true if @client.valid_ips.length == 0
-        @client.valid_ips.each { |valid_ip| return true if ip == valid_ip }
+        @client.valid_ips.each do |valid_ip|
+          match = regexp_from_string(valid_ip).match(ip)
+          return true if match != nil
+        end
         false
       end
 
       def check_host(host)
         return true if @client.valid_domains.length == 0
         @client.valid_domains.each do |d|
-          match = regexp_from_host(d).match(host)
+          match = regexp_from_string(d).match(host)
           return true if match != nil
         end
         false
       end
 
-      def regexp_from_host(host)
+      def regexp_from_string(host)
         Regexp.new '^'+host.gsub('.','\.').gsub('*', '.*') + '$'
       end
 

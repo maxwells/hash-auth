@@ -4,7 +4,7 @@ clients:
     :customer_identifier: my_organization
     :customer_identifier_param: customer_id
     :valid_domains: ['*apple.com', 'localhost']
-    :valid_ips: '192.168.0.1'
+    :valid_ips: ['192.168.0.1', '255.255.255.*']
     :signature_param: signature
     :strategy: :default
     :proxy_email: user@my_organization.org
@@ -13,7 +13,7 @@ clients:
     :customer_identifier: your_organization
     :customer_identifier_param: customer_id
     :valid_domains: ['your_organization.com', 'your_organization.org', '*google.com', '*.org']
-    :valid_ips: '192.168.0.1'
+    :valid_ips: ['192.168.0.1', '255.255.255.*']
     :signature_param: signature
     :authentication_type: :default
     :proxy_email: admin@your_organization.org
