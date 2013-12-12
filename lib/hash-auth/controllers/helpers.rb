@@ -7,7 +7,7 @@ module HashAuth
 
       module ClassMethods
         def initialize_for_hash_auth(actions_requiring_hash_verification)
-          if actions_requiring_hash_verification = [:all]
+          if actions_requiring_hash_verification == [:all]
             before_filter :verify_hash
           else
             before_filter :verify_hash, :only => actions_requiring_hash_verification
