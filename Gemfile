@@ -13,10 +13,6 @@ group :test do
   gem 'guard'
   gem 'guard-bundler'
   gem "rb-fsevent"
-  if RUBY_PLATFORM.downcase.include?("darwin")
-    gem 'ruby_gntp'
-    gem 'growl' # also install growlnotify from the Extras/growlnotify/growlnotify.pkg in Growl disk image.
-  end
 end
 
 group :development do
